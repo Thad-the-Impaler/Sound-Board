@@ -1,0 +1,514 @@
+<meta charset="utf-8">
+<title>Boom Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: sampler chassis. A sticky transport strip on top, then five pad banks, each a wrapping grid of rubber pads with a status LED and a playhead bar. */
+:root {
+  --chassis: #dde1e7;
+  --panel: #eceef2;
+  --pad: #fbfbfc;
+  --pad-edge: #c3c9d2;
+  --ink: #1a1e25;
+  --muted: #5b6372;
+  --line: #c8cdd6;
+  --b-show: #c97f00;
+  --b-meme: #d93d30;
+  --b-screen: #0b857c;
+  --b-hk: #3a66c9;
+  --b-crew: #4f8a12;
+  --danger: #c4261b;
+  --font-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chassis: #131519; --panel: #1b1e24; --pad: #262a32; --pad-edge: #0c0d10;
+    --ink: #eef0f4; --muted: #98a1b0; --line: #30353f;
+    --b-show: #f0a51c; --b-meme: #ff6656; --b-screen: #2cc3b6; --b-hk: #7c9ff2; --b-crew: #8dc845; --danger: #ff6a5e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chassis: #131519; --panel: #1b1e24; --pad: #262a32; --pad-edge: #0c0d10;
+  --ink: #eef0f4; --muted: #98a1b0; --line: #30353f;
+  --b-show: #f0a51c; --b-meme: #ff6656; --b-screen: #2cc3b6; --b-hk: #7c9ff2; --b-crew: #8dc845; --danger: #ff6a5e;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--chassis);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 15px;
+  padding-inline: 16px;
+  padding-block: 0 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 1180px; margin-inline: auto; }
+
+/* Transport strip */
+.transport {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  margin-inline: -16px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--chassis) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.transport-inner {
+  max-width: 1180px; margin-inline: auto;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
+}
+.brand { display: flex; align-items: baseline; gap: 12px; margin-right: auto; min-width: 0; }
+.brand h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 900;
+  font-stretch: 125%;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.brand .count {
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+  letter-spacing: 0.04em; white-space: nowrap;
+}
+.controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.vol { display: flex; align-items: center; gap: 10px; }
+.vol label {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
+.vol input[type=range] { width: 140px; accent-color: var(--ink); }
+.vol output { font-family: var(--font-mono); font-size: 0.78rem; width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.stop {
+  font: inherit; font-weight: 800; font-stretch: 110%; font-size: 0.85rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 10px 16px; border-radius: 8px;
+  border: 1px solid var(--ink); background: var(--ink); color: var(--chassis);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+}
+.stop[disabled] { background: transparent; color: var(--muted); border-color: var(--line); cursor: default; }
+.stop .sq { width: 9px; height: 9px; background: currentColor; border-radius: 1px; }
+.stop kbd { font-family: var(--font-mono); font-size: 0.68rem; opacity: 0.7; font-weight: 500; letter-spacing: 0; }
+
+/* Banks */
+.bank { margin-top: 28px; }
+.bank-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 12px;
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+}
+.bank-head .chip { width: 22px; height: 6px; border-radius: 3px; background: var(--bank); }
+.bank-head .n { font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.02em; }
+.bank-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 420px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+
+/* Pads */
+.pad {
+  --p: 0;
+  position: relative;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  min-height: 112px;
+  padding: 12px 12px 14px;
+  text-align: left;
+  font: inherit; color: var(--ink);
+  background: var(--pad);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 0 var(--pad-edge), inset 0 -10px 18px -14px color-mix(in srgb, var(--ink) 35%, transparent);
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: transform 60ms ease, box-shadow 60ms ease, background-color 160ms ease;
+}
+.pad:hover { border-color: color-mix(in srgb, var(--bank) 55%, var(--line)); }
+.pad:active, .pad.hit { transform: translateY(2px); box-shadow: 0 0 0 var(--pad-edge), inset 0 -6px 14px -12px color-mix(in srgb, var(--ink) 35%, transparent); }
+.pad:focus-visible { outline: 3px solid var(--bank); outline-offset: 2px; }
+.pad.playing { background: color-mix(in srgb, var(--bank) 16%, var(--pad)); border-color: var(--bank); }
+
+.pad-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.led {
+  flex: none; width: 9px; height: 9px; margin-top: 4px; border-radius: 50%;
+  background: color-mix(in srgb, var(--bank) 28%, var(--pad));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bank) 45%, transparent);
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.pad.playing .led { background: var(--bank); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--bank) 70%, transparent); }
+.key {
+  font-family: var(--font-mono); font-size: 0.68rem; line-height: 1;
+  padding: 3px 5px; border-radius: 4px;
+  border: 1px solid var(--line); color: var(--muted); background: var(--panel);
+  text-transform: uppercase;
+}
+@media (hover: none) { .key { display: none; } }
+
+.label {
+  font-size: 1.06rem; font-weight: 800; font-stretch: 88%;
+  line-height: 1.12; letter-spacing: -0.005em;
+  text-wrap: balance; overflow-wrap: anywhere;
+}
+.meta {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  font-size: 0.74rem; color: var(--muted);
+}
+.meta .src { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta .dur { font-family: var(--font-mono); font-variant-numeric: tabular-nums; flex: none; }
+
+.bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+  background: var(--bank);
+  transform-origin: left center;
+  transform: scaleX(var(--p));
+  opacity: 0;
+}
+.pad.playing .bar { opacity: 1; }
+
+.pad.broken { border-style: dashed; border-color: var(--danger); }
+.pad.broken .led { background: var(--danger); box-shadow: none; }
+.pad.broken .src { color: var(--danger); }
+.alert {
+  margin-top: 20px; padding: 12px 14px; border-radius: 8px;
+  border: 1px solid var(--danger); color: var(--ink);
+  background: color-mix(in srgb, var(--danger) 10%, var(--panel));
+  font-size: 0.88rem; line-height: 1.45; max-width: 65ch;
+}
+
+.note { margin-top: 32px; font-size: 0.8rem; color: var(--muted); max-width: 65ch; line-height: 1.5; }
+.note kbd { font-family: var(--font-mono); font-size: 0.74rem; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; background: var(--panel); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pad, .led { transition: none; }
+  .pad.playing .led { box-shadow: none; }
+}
+</style>
+
+<header class="transport">
+  <div class="transport-inner">
+    <div class="brand">
+      <h1>Boom Board</h1>
+      <span class="count" id="count">27 pads</span>
+    </div>
+    <div class="controls">
+      <div class="vol">
+        <label for="volume">Master</label>
+        <input type="range" id="volume" min="0" max="100" step="1" value="80">
+        <output id="volume-out" for="volume">80%</output>
+      </div>
+      <button type="button" class="stop" id="stop-all" disabled><span class="sq"></span>Stop all <kbd>Esc</kbd></button>
+    </div>
+  </div>
+</header>
+
+<p class="wrap alert" id="load-alert" role="alert" hidden></p>
+
+<main class="wrap" id="banks"></main>
+
+<p class="wrap note">Tap a pad to play it. Tap a playing pad to stop it. Different pads can play at the same time. On a keyboard, press the key shown on each pad, and <kbd>Esc</kbd> stops everything.</p>
+
+<script>
+const BANKS = [
+  { id: "show", name: "Game Show", color: "--b-show", pads: [
+    { id: "buzzer", label: "Buzzer", src: "Wrong answer", dur: 1.25 },
+    { id: "ding-ding", label: "Ding Ding", src: "Correct answer", dur: 1.22 },
+    { id: "sitcom-laughter", label: "Sitcom Laughter", src: "Studio audience", dur: 6.35 },
+    { id: "crickets", label: "Crickets", src: "Awkward silence", dur: 6.45 },
+    { id: "womp-womp", label: "Womp Womp", src: "Sad trombone", dur: 3.52 },
+    { id: "romantic-music", label: "Romantic Music", src: "Meme track", dur: 10.70 },
+  ]},
+  { id: "meme", name: "Memes", color: "--b-meme", pads: [
+    { id: "vine-boom", label: "Vine Boom", src: "Vine", dur: 2.90 },
+    { id: "among-us", label: "Among Us Stinger", src: "Role reveal", dur: 4.18 },
+    { id: "missile", label: "The Missile Knows Where It Is", src: "Guidance training film", dur: 5.52 },
+    { id: "it-all-went-wrong", label: "Oh No It All Went Wrong", src: "Chowder", dur: 5.48 },
+    { id: "wilhelm-scream", label: "Wilhelm Scream", src: "Distant Drums, 1951", dur: 1.30 },
+  ]},
+  { id: "screen", name: "Film & TV", color: "--b-screen", pads: [
+    { id: "no-no-no-obsession", label: "No No No", src: "Obsession", dur: 6.10 },
+    { id: "are-you-sure", label: "Are You Sure?", src: "Invincible", dur: 1.07 },
+    { id: "gambit", label: "Woo I'm Bouta Make a Name for Myself", src: "Deadpool & Wolverine", dur: 2.15 },
+    { id: "why-are-you", label: "Why Are You the Way That You Are?", src: "The Office", dur: 1.45 },
+    { id: "no-god-please-no", label: "No God Please No", src: "The Office", dur: 13.00 },
+    { id: "yeah-science", label: "Yeah, Science!", src: "Breaking Bad", dur: 1.25 },
+    { id: "say-my-name", label: "Say My Name", src: "Breaking Bad", dur: 1.05 },
+  ]},
+  { id: "hk", name: "Hallownest", color: "--b-hk", pads: [
+    { id: "kasaa", label: "KASAA!", src: "Quirrel · Hollow Knight", dur: 0.75 },
+    { id: "bacanada", label: "Bacanada", src: "Iselda · Hollow Knight", dur: 2.10 },
+    { id: "trobbio", label: "Trobbio!", src: "Silksong", dur: 1.50 },
+  ]},
+  { id: "crew", name: "Stream & Friends", color: "--b-crew", pads: [
+    { id: "trick-2121-scream", label: "Trick 21:21 Scream", src: "Grief stream 1", dur: 8.55 },
+    { id: "trick-3023-scream", label: "Trick 30:23 Scream", src: "Grief stream 1", dur: 1.65 },
+    { id: "stressless", label: "Stressless", src: "Provided clip", dur: 2.25 },
+    { id: "mkoydokoy", label: "Mmkoydokoy", src: "Provided clip", dur: 3.00 },
+    { id: "do-magnets", label: "Do Magnets", src: "Provided clip", dur: 3.95 },
+    { id: "who-murdered-thad", label: "Who Violently Murdered Thad?", src: "Provided clip", dur: 3.40 },
+  ]},
+];
+const KEYS = "1234567890qwertyuiopasdfghjklzxcvbnm".split("");
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+
+/* ---------- Build pads ---------- */
+const banksEl = document.getElementById("banks");
+const pads = [];
+let total = 0;
+let lastPointer = "";
+for (const bank of BANKS) {
+  const sec = document.createElement("section");
+  sec.className = "bank";
+  sec.style.setProperty("--bank", `var(${bank.color})`);
+  sec.setAttribute("aria-label", bank.name);
+  sec.innerHTML = `<h2 class="bank-head"><span class="chip"></span>${bank.name}<span class="n">${String(bank.pads.length).padStart(2, "0")}</span></h2>`;
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  for (const p of bank.pads) {
+    const key = KEYS[total++];
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pad";
+    btn.id = "pad-" + p.id;
+    btn.setAttribute("aria-pressed", "false");
+    btn.innerHTML =
+      `<span class="pad-top"><span class="label"></span><span class="led" aria-hidden="true"></span></span>` +
+      `<span class="meta"><span class="src"></span><span class="dur">${key ? `<span class="key">${key}</span> ` : ""}${p.dur.toFixed(1)}s</span></span>` +
+      `<span class="bar" aria-hidden="true"></span>`;
+    btn.querySelector(".label").textContent = p.label;
+    btn.querySelector(".src").textContent = p.src;
+    const pad = { ...p, key, el: btn, url: `sounds/${p.id}.mp3`, voices: new Set() };
+    // Mouse fires on press for snappy timing; touch waits for a tap so scrolling never fires pads.
+    btn.addEventListener("pointerdown", (e) => {
+      lastPointer = e.pointerType;
+      if (e.pointerType === "mouse" && e.button === 0) { e.preventDefault(); trigger(pad); }
+    });
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (e.detail === 0 || lastPointer !== "mouse") trigger(pad);
+      lastPointer = "";
+    });
+    grid.appendChild(btn);
+    pads.push(pad);
+  }
+  sec.appendChild(grid);
+  banksEl.appendChild(sec);
+}
+document.getElementById("count").textContent = `${pads.length} pads`;
+
+/* ---------- Audio engine ---------- */
+// Web Audio gives instant, overlapping playback. Sounds come from the copies built into
+// this file when present (window.BOOM_SOUNDS), otherwise from the sounds/ folder.
+// A pad whose sound Web Audio can't load falls back to a plain <audio> element.
+const EMBEDDED = window.BOOM_SOUNDS || null;
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx = null, master = null;
+let volume = Math.min(100, Math.max(0, parseInt(store.get("boomboard.volume") ?? "80", 10) || 0));
+try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+
+function getCtx() {
+  if (!AC) return null;
+  if (!ctx) {
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = gainFor(volume);
+    master.connect(ctx.destination);
+    // If the system interrupts audio (a phone call, Siri), drop the sounds it cut off so
+    // their pads don't stay lit and the clips don't pick up again later.
+    ctx.onstatechange = () => {
+      if (ctx.state === "running") return;
+      for (const pad of [...active]) for (const v of [...pad.voices]) if (!v.el) { v.stop(); endVoice(pad, v); }
+    };
+  }
+  return ctx;
+}
+// Browsers only let audio start from a tap or click, so resume inside the handler.
+function wake() { const c = getCtx(); if (c && c.state !== "running") c.resume().catch(() => {}); }
+function gainFor(v) { return Math.pow(v / 100, 1.6); }
+
+function soundBytes(pad) {
+  const b64 = EMBEDDED && EMBEDDED[pad.id];
+  if (b64) {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return Promise.resolve(bytes.buffer);
+  }
+  return fetch(pad.url).then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.arrayBuffer(); });
+}
+function soundSrc(pad) {
+  const b64 = EMBEDDED && EMBEDDED[pad.id];
+  return b64 ? "data:audio/mpeg;base64," + b64 : pad.url;
+}
+
+// Decodes once per pad; afterwards pad.buffer holds the decoded sound. A download that
+// fails on a hosted page is retried on the next tap. A file that won't decode, or a page
+// opened from disk without built-in sounds, sets pad.webFailed and stays on <audio>.
+function loadBuffer(pad) {
+  if (pad.loading) return pad.loading;
+  const c = getCtx();
+  if (!c) { pad.webFailed = true; return Promise.reject(new Error("Web Audio is unavailable")); }
+  pad.loading = soundBytes(pad)
+    .then((ab) => new Promise((res, rej) => c.decodeAudioData(ab, res, (e) => {
+      const err = e || new Error("decode failed"); err.decode = true; rej(err);
+    })))
+    .then((buf) => { pad.buffer = buf; return buf; },
+          (err) => {
+            pad.loading = null;
+            if (err.decode || (!EMBEDDED && location.protocol === "file:")) pad.webFailed = true;
+            console.warn(`Boom Board: Web Audio couldn't load ${pad.url}`, err);
+            throw err;
+          });
+  return pad.loading;
+}
+function preloadAll() { for (const pad of pads) loadBuffer(pad).catch(() => {}); }
+
+function trigger(pad) {
+  pad.el.classList.add("hit");
+  setTimeout(() => pad.el.classList.remove("hit"), 90);
+  if (pad.voices.size) { stopPad(pad); return; }
+  wake();
+  if (pad.buffer) { playBuffer(pad, pad.buffer); return; }
+  // Not decoded yet: play it with <audio> now, inside the tap where browsers allow it,
+  // and keep loading in the background so the next tap uses Web Audio.
+  playElement(pad);
+  if (AC && !pad.webFailed) loadBuffer(pad).catch(() => {});
+}
+
+function playBuffer(pad, buf) {
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(master);
+  const v = { stop: () => { try { src.stop(); } catch (e) {} }, start: ctx.currentTime, dur: buf.duration, clock: () => ctx.currentTime };
+  src.onended = () => endVoice(pad, v);
+  src.start();
+  addVoice(pad, v);
+  clearBroken(pad);
+}
+
+function playElement(pad) {
+  const a = new Audio(soundSrc(pad));
+  a.volume = gainFor(volume);
+  a.muted = volume === 0; // iOS ignores .volume but honors .muted
+  const v = { el: a, stop: () => { a.pause(); endVoice(pad, v); }, start: 0, dur: pad.dur, clock: () => a.currentTime };
+  const fail = (err) => {
+    if (!pad.voices.has(v)) return;
+    endVoice(pad, v);
+    if (err && err.name === "NotAllowedError") return; // blocked autoplay, not a missing file
+    markBroken(pad, err);
+  };
+  a.addEventListener("ended", () => endVoice(pad, v));
+  a.addEventListener("error", () => fail(a.error));
+  a.addEventListener("playing", () => clearBroken(pad), { once: true });
+  a.play().catch(fail);
+  addVoice(pad, v);
+}
+
+const alertEl = document.getElementById("load-alert");
+function markBroken(pad, err) {
+  console.error(`Boom Board: couldn't play ${pad.url}`, err);
+  pad.el.classList.add("broken");
+  pad.el.querySelector(".src").textContent = "Couldn't load";
+  alertEl.textContent = EMBEDDED
+    ? "Some sounds couldn't play and are marked in red. Reload the page to try again."
+    : location.protocol === "file:"
+      ? "Some sounds couldn't load and are marked in red. The browser couldn't read the sounds folder. Open index.html instead, which has every sound built in."
+      : "Some sounds couldn't load and are marked in red. Check your connection and reload the page to try again.";
+  alertEl.hidden = false;
+}
+function clearBroken(pad) {
+  if (!pad.el.classList.contains("broken")) return;
+  pad.el.classList.remove("broken");
+  pad.el.querySelector(".src").textContent = pad.src;
+  if (!pads.some((p) => p.el.classList.contains("broken"))) alertEl.hidden = true;
+}
+
+const active = new Set();
+function addVoice(pad, v) {
+  pad.voices.add(v);
+  active.add(pad);
+  pad.el.classList.add("playing");
+  pad.el.setAttribute("aria-pressed", "true");
+  syncStop();
+  tick();
+}
+function endVoice(pad, v) {
+  pad.voices.delete(v);
+  if (!pad.voices.size) {
+    active.delete(pad);
+    pad.el.classList.remove("playing");
+    pad.el.setAttribute("aria-pressed", "false");
+    pad.el.style.setProperty("--p", 0);
+  }
+  syncStop();
+}
+function stopPad(pad) { for (const v of [...pad.voices]) { v.stop(); endVoice(pad, v); } }
+function stopAll() { for (const pad of [...active]) stopPad(pad); }
+
+const stopBtn = document.getElementById("stop-all");
+stopBtn.addEventListener("click", stopAll);
+function syncStop() { stopBtn.disabled = active.size === 0; }
+
+let raf = 0;
+function tick() {
+  if (raf) return;
+  const step = () => {
+    raf = 0;
+    for (const pad of active) {
+      let p = 0;
+      for (const v of pad.voices) p = Math.max(p, Math.min(1, (v.clock() - v.start) / v.dur));
+      pad.el.style.setProperty("--p", p.toFixed(4));
+    }
+    if (active.size) raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+/* ---------- Volume ---------- */
+const volEl = document.getElementById("volume");
+const volOut = document.getElementById("volume-out");
+function applyVolume(v) {
+  volume = v;
+  volEl.value = v;
+  volOut.textContent = v + "%";
+  if (master) master.gain.setTargetAtTime(gainFor(v), ctx.currentTime, 0.015);
+  for (const pad of active) for (const vc of pad.voices) if (vc.el) { vc.el.volume = gainFor(v); vc.el.muted = v === 0; }
+}
+volEl.addEventListener("input", () => { applyVolume(+volEl.value); store.set("boomboard.volume", String(volume)); });
+applyVolume(volume);
+
+/* ---------- Keyboard ---------- */
+const byKey = new Map(pads.filter((p) => p.key).map((p) => [p.key, p]));
+document.addEventListener("keydown", (e) => {
+  if (e.repeat) {
+    // Holding Enter on a focused pad would otherwise toggle it on every key repeat.
+    if (e.key === "Enter" && e.target.closest && e.target.closest(".pad")) e.preventDefault();
+    return;
+  }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "Escape") { stopAll(); return; }
+  // The volume slider keeps focus after a click; pad keys and Esc should still work then.
+  if (e.target instanceof HTMLInputElement && e.target.type !== "range") return;
+  const pad = byKey.get(e.key.toLowerCase());
+  if (pad) { e.preventDefault(); trigger(pad); }
+});
+
+// Fetch and decode everything up front so the first pad fires instantly.
+preloadAll();
+</script>

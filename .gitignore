@@ -1,0 +1,5 @@
+# Raw source media (one file is over 10 GB); the trimmed clips live in sounds/
+Given/
+
+.DS_Store
+__pycache__/
