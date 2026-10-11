@@ -4,7 +4,9 @@ A 27-pad meme sound board in a single web page. Tap a pad to play its sound, and
 
 ## Use it
 
-Download or clone the repo and open **`index.html`** in a browser. Every sound is built into that one file, so it works from any folder and needs no server or internet connection.
+**Online:** https://thad-the-impaler.github.io/Sound-Board/ works on any phone or computer.
+
+**Offline:** download or clone the repo and open **`index.html`** in a browser. Every sound is built into that one file, so it works from any folder and needs no server or internet connection.
 
 - **Mouse or touch:** tap a pad to play it, and tap a playing pad to stop it.
 - **Keyboard:** each pad shows its key (`1`–`0`, then letters from `q`). `Esc` stops everything.
