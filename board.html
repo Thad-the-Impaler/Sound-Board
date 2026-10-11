@@ -19,6 +19,7 @@
   --b-screen: #0b857c;
   --b-hk: #3a66c9;
   --b-crew: #4f8a12;
+  --b-stage: #b8336a;
   --danger: #c4261b;
   --font-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -28,14 +29,14 @@
   :root:not([data-theme="light"]) {
     --chassis: #131519; --panel: #1b1e24; --pad: #262a32; --pad-edge: #0c0d10;
     --ink: #eef0f4; --muted: #98a1b0; --line: #30353f;
-    --b-show: #f0a51c; --b-meme: #ff6656; --b-screen: #2cc3b6; --b-hk: #7c9ff2; --b-crew: #8dc845; --danger: #ff6a5e;
+    --b-show: #f0a51c; --b-meme: #ff6656; --b-screen: #2cc3b6; --b-hk: #7c9ff2; --b-crew: #8dc845; --b-stage: #f472a8; --danger: #ff6a5e;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --chassis: #131519; --panel: #1b1e24; --pad: #262a32; --pad-edge: #0c0d10;
   --ink: #eef0f4; --muted: #98a1b0; --line: #30353f;
-  --b-show: #f0a51c; --b-meme: #ff6656; --b-screen: #2cc3b6; --b-hk: #7c9ff2; --b-crew: #8dc845; --danger: #ff6a5e;
+  --b-show: #f0a51c; --b-meme: #ff6656; --b-screen: #2cc3b6; --b-hk: #7c9ff2; --b-crew: #8dc845; --b-stage: #f472a8; --danger: #ff6a5e;
   color-scheme: dark;
 }
 
@@ -223,46 +224,59 @@ body {
 <p class="wrap note">Tap a pad to play it. Tap a playing pad to stop it. Different pads can play at the same time. On a keyboard, press the key shown on each pad, and <kbd>Esc</kbd> stops everything.</p>
 
 <script>
+// Each pad keeps its own keyboard key, so adding pads never moves existing shortcuts.
 const BANKS = [
   { id: "show", name: "Game Show", color: "--b-show", pads: [
-    { id: "buzzer", label: "Buzzer", src: "Wrong answer", dur: 1.25 },
-    { id: "ding-ding", label: "Ding Ding", src: "Correct answer", dur: 1.22 },
-    { id: "sitcom-laughter", label: "Sitcom Laughter", src: "Studio audience", dur: 6.35 },
-    { id: "crickets", label: "Crickets", src: "Awkward silence", dur: 6.45 },
-    { id: "womp-womp", label: "Womp Womp", src: "Sad trombone", dur: 3.52 },
-    { id: "romantic-music", label: "Romantic Music", src: "Meme track", dur: 10.70 },
+    { id: "buzzer", label: "Buzzer", src: "Wrong answer", dur: 1.25, key: "1" },
+    { id: "ding-ding", label: "Ding Ding", src: "Correct answer", dur: 1.22, key: "2" },
+    { id: "sitcom-laughter", label: "Sitcom Laughter", src: "Studio audience", dur: 6.35, key: "3" },
+    { id: "crickets", label: "Crickets", src: "Awkward silence", dur: 6.45, key: "4" },
+    { id: "womp-womp", label: "Womp Womp", src: "Sad trombone", dur: 3.52, key: "5" },
+    { id: "romantic-music", label: "Romantic Music", src: "Meme track", dur: 10.70, key: "6" },
   ]},
   { id: "meme", name: "Memes", color: "--b-meme", pads: [
-    { id: "vine-boom", label: "Vine Boom", src: "Vine", dur: 2.90 },
-    { id: "among-us", label: "Among Us Stinger", src: "Role reveal", dur: 4.18 },
-    { id: "missile", label: "The Missile Knows Where It Is", src: "Guidance training film", dur: 5.52 },
-    { id: "it-all-went-wrong", label: "Oh No It All Went Wrong", src: "Chowder", dur: 5.48 },
-    { id: "wilhelm-scream", label: "Wilhelm Scream", src: "Distant Drums, 1951", dur: 1.30 },
+    { id: "vine-boom", label: "Vine Boom", src: "Vine", dur: 2.90, key: "7" },
+    { id: "among-us", label: "Among Us Stinger", src: "Role reveal", dur: 4.18, key: "8" },
+    { id: "missile", label: "The Missile Knows Where It Is", src: "Guidance training film", dur: 5.52, key: "9" },
+    { id: "it-all-went-wrong", label: "Oh No It All Went Wrong", src: "Chowder", dur: 5.48, key: "0" },
+    { id: "wilhelm-scream", label: "Wilhelm Scream", src: "Distant Drums, 1951", dur: 1.30, key: "q" },
+    { id: "thats-my-boy", label: "That's My Boy", src: "asdfmovie13", dur: 3.04, key: "k" },
+    { id: "thriller-laugh", label: "Thriller Laugh", src: "Michael Jackson", dur: 10.72, key: "l" },
+    { id: "lurkin", label: "Lurkin', Liftin', Lickin'", src: "Neural Viz", dur: 3.02, key: "z" },
   ]},
-  { id: "screen", name: "Film & TV", color: "--b-screen", pads: [
-    { id: "no-no-no-obsession", label: "No No No", src: "Obsession", dur: 6.10 },
-    { id: "are-you-sure", label: "Are You Sure?", src: "Invincible", dur: 1.07 },
-    { id: "gambit", label: "Woo I'm Bouta Make a Name for Myself", src: "Deadpool & Wolverine", dur: 2.15 },
-    { id: "why-are-you", label: "Why Are You the Way That You Are?", src: "The Office", dur: 1.45 },
-    { id: "no-god-please-no", label: "No God Please No", src: "The Office", dur: 13.00 },
-    { id: "yeah-science", label: "Yeah, Science!", src: "Breaking Bad", dur: 1.25 },
-    { id: "say-my-name", label: "Say My Name", src: "Breaking Bad", dur: 1.05 },
+  { id: "tv", name: "TV", color: "--b-screen", pads: [
+    { id: "are-you-sure", label: "Are You Sure?", src: "Invincible", dur: 1.07, key: "e" },
+    { id: "why-are-you", label: "Why Are You the Way That You Are?", src: "The Office", dur: 1.45, key: "t" },
+    { id: "no-god-please-no", label: "No God Please No", src: "The Office", dur: 13.00, key: "y" },
+    { id: "yeah-science", label: "Yeah, Science!", src: "Breaking Bad", dur: 1.25, key: "u" },
+    { id: "say-my-name", label: "Say My Name", src: "Breaking Bad", dur: 1.05, key: "i" },
+    { id: "respect-wood", label: "Do You Respect Wood?", src: "Curb Your Enthusiasm", dur: 1.23, key: "x" },
+    { id: "palace", label: "Don't Set Fire to the Palace", src: "Loki", dur: 3.14, key: "c" },
+    { id: "nothing-matters", label: "Nothing Matters!", src: "Loki", dur: 4.23, key: "v" },
+    { id: "nine-one-one", label: "9-1-1", src: "9-1-1 (FOX)", dur: 3.77, key: "b" },
+  ]},
+  { id: "stage", name: "Film & Stage", color: "--b-stage", pads: [
+    { id: "no-no-no-obsession", label: "No No No", src: "Obsession", dur: 6.10, key: "w" },
+    { id: "gambit", label: "Woo I'm Bouta Make a Name for Myself", src: "Deadpool & Wolverine", dur: 2.15, key: "r" },
+    { id: "stay-in-character", label: "Stay in Character!", src: "Backrooms", dur: 0.78, key: "n" },
+    { id: "feast-over", label: "Enough! The Feast Is Done!", src: "The Odyssey", dur: 4.59, key: "m" },
+    { id: "call-me-son", label: "Call Me Son One More Time!", src: "Hamilton", dur: 2.10, key: "," },
   ]},
   { id: "hk", name: "Hallownest", color: "--b-hk", pads: [
-    { id: "kasaa", label: "KASAA!", src: "Quirrel · Hollow Knight", dur: 0.75 },
-    { id: "bacanada", label: "Bacanada", src: "Iselda · Hollow Knight", dur: 2.10 },
-    { id: "trobbio", label: "Trobbio!", src: "Silksong", dur: 1.50 },
+    { id: "kasaa", label: "KASAA!", src: "Quirrel · Hollow Knight", dur: 0.75, key: "o" },
+    { id: "bacanada", label: "Bacanada", src: "Iselda · Hollow Knight", dur: 2.10, key: "p" },
+    { id: "trobbio", label: "Trobbio!", src: "Silksong", dur: 1.50, key: "a" },
   ]},
   { id: "crew", name: "Stream & Friends", color: "--b-crew", pads: [
-    { id: "trick-2121-scream", label: "Trick 21:21 Scream", src: "Grief stream 1", dur: 8.55 },
-    { id: "trick-3023-scream", label: "Trick 30:23 Scream", src: "Grief stream 1", dur: 1.65 },
-    { id: "stressless", label: "Stressless", src: "Provided clip", dur: 2.25 },
-    { id: "mkoydokoy", label: "Mmkoydokoy", src: "Provided clip", dur: 3.00 },
-    { id: "do-magnets", label: "Do Magnets", src: "Provided clip", dur: 3.95 },
-    { id: "who-murdered-thad", label: "Who Violently Murdered Thad?", src: "Provided clip", dur: 3.40 },
+    { id: "trick-2121-scream", label: "Trick 21:21 Scream", src: "Grief stream 1", dur: 8.55, key: "s" },
+    { id: "trick-3023-scream", label: "Trick 30:23 Scream", src: "Grief stream 1", dur: 1.65, key: "d" },
+    { id: "stressless", label: "Stressless", src: "Provided clip", dur: 2.25, key: "f" },
+    { id: "mkoydokoy", label: "Mmkoydokoy", src: "Provided clip", dur: 3.00, key: "g" },
+    { id: "do-magnets", label: "Do Magnets", src: "Provided clip", dur: 3.95, key: "h" },
+    { id: "who-murdered-thad", label: "Who Violently Murdered Thad?", src: "Provided clip", dur: 3.40, key: "j" },
+    { id: "waterfall", label: "Waterfall", src: "Provided clip", dur: 2.52, key: "." },
   ]},
 ];
-const KEYS = "1234567890qwertyuiopasdfghjklzxcvbnm".split("");
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -272,7 +286,6 @@ const store = {
 /* ---------- Build pads ---------- */
 const banksEl = document.getElementById("banks");
 const pads = [];
-let total = 0;
 let lastPointer = "";
 for (const bank of BANKS) {
   const sec = document.createElement("section");
@@ -283,7 +296,7 @@ for (const bank of BANKS) {
   const grid = document.createElement("div");
   grid.className = "grid";
   for (const p of bank.pads) {
-    const key = KEYS[total++];
+    const key = p.key;
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "pad";
@@ -295,7 +308,7 @@ for (const bank of BANKS) {
       `<span class="bar" aria-hidden="true"></span>`;
     btn.querySelector(".label").textContent = p.label;
     btn.querySelector(".src").textContent = p.src;
-    const pad = { ...p, key, el: btn, url: `sounds/${p.id}.mp3`, voices: new Set() };
+    const pad = { ...p, el: btn, url: `sounds/${p.id}.mp3`, voices: new Set() };
     // Mouse fires on press for snappy timing; touch waits for a tap so scrolling never fires pads.
     btn.addEventListener("pointerdown", (e) => {
       lastPointer = e.pointerType;
