@@ -23,13 +23,17 @@ def main():
             sounds[pad_id] = base64.b64encode(f.read()).decode("ascii")
 
     body = re.sub(r'^<meta charset="utf-8">\n', "", src)
+    # Browsers only use a tab icon declared in <head>, so lift it (and the title) out of the body.
+    head_tags = re.findall(r'^(?:<title>.*</title>|<link rel="icon" [^\n]*>)\n', body, flags=re.M)
+    for tag in head_tags:
+        body = body.replace(tag, "", 1)
     inline = "<script>window.BOOM_SOUNDS = " + json.dumps(sounds, separators=(",", ":")) + ";</script>\n"
     k = body.index("<script>")
     body = body[:k] + inline + body[k:]
     html = (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        "</head>\n<body>\n" + body + "\n</body>\n</html>\n"
+        + "".join(head_tags) + "</head>\n<body>\n" + body + "\n</body>\n</html>\n"
     )
     with open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
