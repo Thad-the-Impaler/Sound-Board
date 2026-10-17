@@ -1,6 +1,6 @@
 # Boom Board
 
-A 47-pad meme sound board in a single web page. Tap a pad to play its sound, and tap it again to stop. Different pads can play at the same time.
+A 48-pad meme sound board in a single web page. Tap a pad to play its sound, and tap it again to stop. Different pads can play at the same time.
 
 ## Use it
 
@@ -9,7 +9,7 @@ A 47-pad meme sound board in a single web page. Tap a pad to play its sound, and
 **Offline:** download or clone the repo and open **`index.html`** in a browser. Every sound is built into that one file, so it works from any folder and needs no server or internet connection.
 
 - **Mouse or touch:** tap a pad to play it, and tap a playing pad to stop it.
-- **Keyboard:** each pad shows its key (`1`–`0`, the letters, and the punctuation keys). `Esc` stops everything.
+- **Keyboard:** each pad shows its key (`1`–`0`, the letters, the punctuation keys, and `!` for Shift+1). `Esc` stops everything.
 - **Master** sets the volume for all pads. **Stop all** stops every sound.
 - On an iPhone, turn off the silent switch if you hear nothing.
 
@@ -19,7 +19,7 @@ A 47-pad meme sound board in a single web page. Tap a pad to play its sound, and
 | --- | --- |
 | `index.html` | The board with all sounds built in. Open this one. Generated; don't edit it by hand. |
 | `board.html` | The page source. It loads sounds from `sounds/`, so it needs a web server. |
-| `sounds/` | The 47 trimmed clips (MP3, 192 kbps). |
+| `sounds/` | The 48 trimmed clips (MP3, 192 kbps). |
 | `tools/build_index.py` | Rebuilds `index.html` from `board.html` and `sounds/`. |
 
 After changing `board.html` or a clip, rebuild:
@@ -32,7 +32,7 @@ To add a pad, add the clip to `sounds/<id>.mp3`, add an entry with that `id` and
 
 ## Sounds
 
-Clips are trimmed to the moment itself and loudness-matched. Speech is about −16 LUFS. Crickets, the romantic music, the screams, the Thriller laugh and the Invincible title card are a little quieter so they don't overpower everything else.
+Clips are trimmed to the moment itself and loudness-matched. Speech is about −16 LUFS. Crickets, the romantic music, the screams, Leeroy, the Thriller laugh and the Invincible title card are a little quieter so they don't overpower everything else.
 
 | Bank | Pad | Key | Source | Clip taken from |
 | --- | --- | --- | --- | --- |
@@ -51,6 +51,7 @@ Clips are trimmed to the moment itself and loudness-matched. Speech is about −
 | Memes | Thriller Laugh | `l` | Vincent Price, "Thriller" (official track audio; same laugh as the video) | [YouTube](https://www.youtube.com/watch?v=sO4vI8P88NM&t=344) 5:44.6–5:55.3 |
 | Memes | Lurkin', Liftin', Lickin' | `z` | Neural Viz, *Unanswered Oddities* Ep. 7 "Exercise" (Bobo) | [YouTube](https://www.youtube.com/watch?v=g_W-Bbe8iCk&t=112) 1:52.9–1:55.9 |
 | Memes | It's Stickyyy | `-` | Marcello Hernández's Sebastian Maniscalco impression, *Good Hang with Amy Poehler* | [YouTube](https://www.youtube.com/watch?v=l_x_Ki8P_dk&t=2160) 36:00.1–36:01.7 |
+| Memes | LEEROY JENKINS! | `!` | *World of Warcraft* "Leeroy Jenkins" raid video (2005) | [YouTube](https://www.youtube.com/watch?v=mLyOj_QD4a4&t=85) 1:25.5–1:29.4 |
 | TV | Are You Sure? | `e` | *Invincible*, Omni-Man | [YouTube](https://www.youtube.com/watch?v=-QT1ek1TPIQ&t=324) 5:24.9–5:26.0 |
 | TV | Invincible Title Card | `=` | *Invincible* S1E1 title card (Prime Video) | [YouTube](https://www.youtube.com/watch?v=ajB1NmqfPpI&t=10) 0:10.4–0:15.7 |
 | TV | Why Are You the Way That You Are? | `t` | *The Office*, Michael Scott | [YouTube](https://www.youtube.com/watch?v=aYmOqPFyJPw) 0:03.0–0:04.4 |
